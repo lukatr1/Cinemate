@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Card
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -41,18 +42,27 @@ import com.example.movieappmad24.models.getMovies
 import com.example.movieappmad24.ui.theme.MovieAppMAD24Theme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ContentScale.Companion.FillWidth
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
@@ -63,18 +73,52 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MovieAppMAD24Theme {
-                Scaffold(
-                    topBar = { AppTopBar() },
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                )
+                {
+                    Scaffold(
+                        topBar = { AppTopBar() },
 
-                    bottomBar = { AppBottomBar() }
-                ) {
-                    MovieContent()
+                        //bottomBar = { AppBottomBar() }
+                        bottomBar = {
+                            NavigationBar {
+                                NavigationBarItem(
+                                    selected = false,
+                                    onClick = { /*TODO*/ },
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Home,
+                                            contentDescription = "Home"
+                                        )
+                                    },
+                                    label = { Text("Home") }
+                                )
+                                NavigationBarItem(
+                                    selected = false,
+                                    onClick = { /*TODO*/ },
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.Outlined.FavoriteBorder,
+                                            contentDescription = "Watchlist"
+                                        )
+                                    },
+                                    label = { Text("Watchlist") }
+                                )
+                            }
+                        }
+                    )
+                    {
+                        MovieContent()
 
+                    }
                 }
             }
         }
     }
 }
+
 @Composable
 fun AppTopBar() {
     Row(
@@ -91,51 +135,6 @@ fun AppTopBar() {
             modifier = Modifier.padding(start = 16.dp),
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
         )
-    }
-}
-@Composable
-fun AppBottomBar() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(70.dp)
-            .background(color = Color.LightGray),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly // Adjusted to evenly distribute space
-    ) {
-        // Home Icon and Text
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.weight(1f)
-        ) {
-            Icon(
-                tint = Color.Black,
-                imageVector = Icons.Default.Home,
-                contentDescription = "Home"
-            )
-            Text(
-                text = "Home",
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Black
-            )
-        }
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.weight(1f)
-        ) {
-            Icon(
-                tint = Color.Black,
-                imageVector = Icons.Default.Star,
-                contentDescription = "Watchlist"
-            )
-            Text(
-                text = "Watchlist",
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Black
-            )
-        }
     }
 }
 
