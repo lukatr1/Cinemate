@@ -6,6 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -50,9 +52,16 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,58 +70,62 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ContentScale.Companion.FillWidth
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
 
 class MainActivity : ComponentActivity() {
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MovieAppMAD24Theme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                )
-                {
-                    Scaffold(
-                        topBar = { AppTopBar() },
-
-                        //bottomBar = { AppBottomBar() }
-                        bottomBar = {
-                            NavigationBar {
-                                NavigationBarItem(
-                                    selected = false,
-                                    onClick = { /*TODO*/ },
-                                    icon = {
-                                        Icon(
-                                            imageVector = Icons.Outlined.Home,
-                                            contentDescription = "Home"
-                                        )
-                                    },
-                                    label = { Text("Home") }
-                                )
-                                NavigationBarItem(
-                                    selected = false,
-                                    onClick = { /*TODO*/ },
-                                    icon = {
-                                        Icon(
-                                            imageVector = Icons.Outlined.FavoriteBorder,
-                                            contentDescription = "Watchlist"
-                                        )
-                                    },
-                                    label = { Text("Watchlist") }
-                                )
-                            }
+                // A surface container using the 'background' color from the theme
+                Scaffold (
+                    topBar = {
+                        CenterAlignedTopAppBar(
+                            title = { Text("Movie App")},
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                titleContentColor = MaterialTheme.colorScheme.primary
+                            )
+                        )
+                    },
+                    bottomBar = {
+                        NavigationBar {
+                            NavigationBarItem(
+                                label = { Text("Home") },
+                                selected = true,
+                                onClick = { /*TODO*/ },
+                                icon = { Icon(
+                                    imageVector = Icons.Filled.Home,
+                                    contentDescription = "Go to home"
+                                )}
+                            )
+                            NavigationBarItem(
+                                label = { Text("Watchlist") },
+                                selected = false,
+                                onClick = { /*TODO*/ },
+                                icon = { Icon(
+                                    imageVector = Icons.Filled.Star,
+                                    contentDescription = "Go to watchlist"
+                                )}
+                            )
                         }
-                    )
-                    {
-                        MovieContent()
-
                     }
+                ){ innerPadding ->
+                    MovieList(
+                        modifier = Modifier.padding(innerPadding),
+                        movies = getMovies()
+                    )
                 }
             }
         }
@@ -120,146 +133,135 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppTopBar() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(60.dp)
-            .background(color = Color.LightGray),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceAround
-    ) {
-        Text(
-            text = "Cinemate",
-            color = Color.Black,
-            modifier = Modifier.padding(start = 16.dp),
-            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
-        )
-    }
-}
-
-@Composable
-fun MovieContent() {
-    val movies = getMovies()
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 14.dp, vertical = 65.dp)
-    ) {
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-        ) {
-            items(movies) { movie ->
-                MovieCard(movie = movie)
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+fun MovieList(modifier: Modifier, movies: List<Movie> = getMovies()){
+    LazyColumn(modifier = modifier) {
+        items(movies) { movie ->
+            MovieRow(movie)
         }
     }
 }
 
-
 @Composable
-fun MovieCard(movie: Movie) {
-    var expanded by remember { mutableStateOf(false) }
-    //val arrowRotation by animateDpAsState(targetValue = if (expanded) 180.dp else 0.dp)
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        //elevation = 8.dp,
-        shape = RoundedCornerShape(8.dp)
+fun MovieRow(movie: Movie){
+    Card(modifier = Modifier
+        .fillMaxWidth()
+        .padding(5.dp),
+        shape = ShapeDefaults.Large,
+        elevation = CardDefaults.cardElevation(10.dp)
     ) {
         Column {
 
-            Box(modifier = Modifier)
-            {
-                AsyncImage(
-                    model = movie.images[0],
-                    contentDescription = null,
-                    contentScale = FillWidth,
-                    modifier = Modifier
-                        .aspectRatio(ratio =19f / 7f)
-                )
-                Icon(
-                    imageVector = Icons.Default.FavoriteBorder,
-                    contentDescription = "likeBtn",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(27.dp)
-                        .align(Alignment.TopEnd)
-                        // add padding (don't know if this should be done this way)
-                        .offset(x = (-15).dp, y = 15.dp)
-                )
-            }
-        }
+            MovieCardHeader(imageUrl = movie.images[0])
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Display movie title
-            Text(
-                text = movie.title,
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier
-                    .padding(8.dp)
-                    .weight(1f)
-            )
-            Icon(
-                imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                contentDescription = "Expand/Collapse",
-                modifier = Modifier
-                    .padding(8.dp)
-                    .size(36.dp)
-                    .clickable { expanded = !expanded }
-                /*.graphicsLayer {
-                    rotationX = arrowRotation.180F
-                }*/
-            )
-        }
-        // Display movie details if expanded
-        AnimatedVisibility(visible = expanded, enter = expandVertically(), exit = shrinkVertically()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-            ) {
-                Text(
-                    text = "Director: ${movie.director}",
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(4.dp)
-                )
-                Text(
-                    text = "Released: ${movie.year}",
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(4.dp)
-                )
 
-                Text(
-                    text = "Genre: ${movie.genre}",
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(4.dp)
-                )
-                Text(
-                    text = "Actors: ${movie.actors}",
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(4.dp)
-                )
-                Text(
-                    text = "Rating: ${movie.rating}",
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(4.dp)
-                )
-                Text(
-                    text = "Plot: ${movie.plot}",
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(4.dp)
-                )
-            }
-        }
+            MovieDetails(modifier = Modifier.padding(12.dp), movie = movie)
 
+        }
+    }
+}
+
+@Composable
+fun MovieCardHeader(imageUrl: String) {
+    Box(
+        modifier = Modifier
+            .height(150.dp)
+            .fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+
+        MovieImage(imageUrl)
+
+        FavoriteIcon()
+    }
+}
+
+@Composable
+fun MovieImage(imageUrl: String){
+    SubcomposeAsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(imageUrl)
+            .crossfade(true)
+            .build(),
+        contentScale = ContentScale.Crop,
+        contentDescription = "movie poster",
+        loading = {
+            CircularProgressIndicator()
+        }
+    )
+}
+
+@Composable
+fun FavoriteIcon() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(10.dp),
+        contentAlignment = Alignment.TopEnd
+    ){
+        Icon(
+            tint = MaterialTheme.colorScheme.secondary,
+            imageVector = Icons.Default.FavoriteBorder,
+            contentDescription = "Add to favorites")
+    }
+}
+
+
+@Composable
+fun MovieDetails(modifier: Modifier, movie: Movie) {
+    var showDetails by remember {
+        mutableStateOf(false)
+    }
+
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = movie.title)
+        Icon(modifier = Modifier
+            .clickable {
+                showDetails = !showDetails
+            },
+            imageVector =
+            if (showDetails) Icons.Filled.KeyboardArrowDown
+            else Icons.Default.KeyboardArrowUp, contentDescription = "show more")
+    }
+
+
+    AnimatedVisibility(
+        visible = showDetails,
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        Column (modifier = modifier) {
+            Text(text = "Director: ${movie.director}", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "Released: ${movie.year}", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "Genre: ${movie.genre}", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "Actors: ${movie.actors}", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "Rating: ${movie.rating}", style = MaterialTheme.typography.bodyMedium)
+
+            Divider(modifier = Modifier.padding(3.dp))
+
+            Text(buildAnnotatedString {
+                withStyle(style = SpanStyle(color = Color.White, fontSize = 13.sp)) {
+                    append("Plot: ")
+                }
+                withStyle(style = SpanStyle(color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Normal)){
+                    append(movie.plot)
+                }
+            })
+        }
+    }
+}
+
+@Preview
+@Composable
+fun DefaultPreview(){
+    MovieAppMAD24Theme {
+        MovieList(modifier = Modifier, movies = getMovies())
     }
 }
 
